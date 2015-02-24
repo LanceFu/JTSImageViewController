@@ -19,6 +19,7 @@
 @protocol JTSImageViewControllerInteractionsDelegate;
 @protocol JTSImageViewControllerAccessibilityDelegate;
 @protocol JTSImageViewControllerAnimationDelegate;
+@protocol JTSImageViewControllerImageDataSourceDelegate;
 
 typedef NS_ENUM(NSInteger, JTSImageViewControllerMode) {
     JTSImageViewControllerMode_Image,
@@ -63,6 +64,8 @@ extern CGFloat const JTSImageViewController_DefaultBackgroundBlurRadius;
 
 @property (weak, nonatomic, readwrite) id <JTSImageViewControllerAnimationDelegate> animationDelegate;
 
+@property (weak, nonatomic, readwrite) id <JTSImageViewControllerImageDataSourceDelegate> imageDataSourceDelegate;
+
 /**
  Designated initializer.
  
@@ -76,6 +79,10 @@ extern CGFloat const JTSImageViewController_DefaultBackgroundBlurRadius;
 - (instancetype)initWithImageInfo:(JTSImageInfo *)imageInfo
                              mode:(JTSImageViewControllerMode)mode
                   backgroundStyle:(JTSImageViewControllerBackgroundOptions)backgroundOptions;
+
+- (instancetype)initWithMode:(JTSImageViewControllerMode)mode
+             backgroundStyle:(JTSImageViewControllerBackgroundOptions)backgroundOptions
+     imageDataSourceDelegate:(id <JTSImageViewControllerImageDataSourceDelegate>)imageDataSourceDelegate;
 
 /**
  JTSImageViewController is presented from viewController as a UIKit modal view controller.
@@ -229,7 +236,17 @@ extern CGFloat const JTSImageViewController_DefaultBackgroundBlurRadius;
 
 @end
 
+///--------------------------------------------------------------------------------------------------------------------
+/// Image Data Source Delegate
+///--------------------------------------------------------------------------------------------------------------------
 
+@protocol JTSImageViewControllerImageDataSourceDelegate <NSObject>
+@required
+
+- (NSInteger)numberOfImagesInImageViewer:(JTSImageViewController *)imageViewer;
+- (JTSImageInfo *)imageViewer:(JTSImageViewController *)imageViewer imageInfoAtIndex:(NSInteger)index;
+
+@end
 
 
 

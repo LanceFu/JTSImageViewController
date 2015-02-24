@@ -75,6 +75,7 @@ typedef struct {
 @property (assign, nonatomic, readwrite) JTSImageViewControllerBackgroundOptions backgroundOptions;
 @property (assign, nonatomic) JTSImageViewControllerStartingInfo startingInfo;
 @property (assign, nonatomic) JTSImageViewControllerFlags flags;
+@property (assign, nonatomic) NSInteger currentIndex;
 
 // Autorotation
 @property (assign, nonatomic) UIInterfaceOrientation lastUsedOrientation;
@@ -133,6 +134,21 @@ typedef struct {
         _backgroundOptions = backgroundOptions;
         if (_mode == JTSImageViewControllerMode_Image) {
             [self setupImageAndDownloadIfNecessary:imageInfo];
+        }
+    }
+    return self;
+}
+
+- (instancetype)initWithMode:(JTSImageViewControllerMode)mode backgroundStyle:(JTSImageViewControllerBackgroundOptions)backgroundOptions imageDataSourceDelegate:(id <JTSImageViewControllerImageDataSourceDelegate>)imageDataSourceDelegate {
+    self = [super initWithNibName:nil bundle:nil];
+    if (self) {
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(deviceOrientationDidChange:) name:UIDeviceOrientationDidChangeNotification object:nil];
+        _currentSnapshotRotationTransform = CGAffineTransformIdentity;
+        _mode = mode;
+        _backgroundOptions = backgroundOptions;
+        _imageDataSourceDelegate = imageDataSourceDelegate;
+        if (_mode == JTSImageViewControllerMode_Image) {
+            [self setupImageAndDownloadIfNecessary:self.imageInfo];
         }
     }
     return self;
@@ -197,6 +213,16 @@ typedef struct {
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
     [_imageDownloadDataTask cancel];
     [self cancelProgressTimer];
+}
+
+#pragma mark - Getters
+
+- (JTSImageInfo *)imageInfo {
+    if ([self.imageDataSourceDelegate respondsToSelector:@selector(imageViewer:imageInfoAtIndex:)]) {
+        JTSImageInfo *info = [self.imageDataSourceDelegate imageViewer:self imageInfoAtIndex:self.currentIndex];
+        return info;
+    }
+    return _imageInfo;
 }
 
 #pragma mark - UIViewController
