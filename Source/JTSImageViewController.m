@@ -573,7 +573,12 @@ typedef struct {
     [self.view addGestureRecognizer:self.longPresserPhoto];
     
     self.panRecognizer = [[UIPanGestureRecognizer alloc] init];
-    [self.panRecognizer addTarget:self action:@selector(dismissingPanGestureRecognizerPanned:)];
+    if ([self.imageDataSourceDelegate respondsToSelector:@selector(imageViewer:imageInfoAtIndex:)]) {
+        [self.panRecognizer addTarget:self action:@selector(updatingPanGestureRecognizerPanned:)];
+    }
+    else {
+        [self.panRecognizer addTarget:self action:@selector(dismissingPanGestureRecognizerPanned:)];
+    }
     self.panRecognizer.delegate = self;
     [self.scrollView addGestureRecognizer:self.panRecognizer];
 }
@@ -1709,6 +1714,66 @@ typedef struct {
             [menuController setTargetRect:CGRectMake(location.x, location.y, 0.0f, 0.0f) inView:self.imageView];
             [menuController setMenuVisible:YES animated:YES];
         }
+    }
+}
+
+- (void)updatingPanGestureRecognizerPanned:(UIPanGestureRecognizer *)panner {
+    
+    if (_flags.scrollViewIsAnimatingAZoom || _flags.isAnimatingAPresentationOrDismissal) {
+        return;
+    }
+    
+    CGPoint translation = [panner translationInView:panner.view];
+    CGPoint locationInView = [panner locationInView:panner.view];
+    
+    if (panner.state == UIGestureRecognizerStateBegan) {
+        _flags.isDraggingImage = CGRectContainsPoint(self.imageView.frame, locationInView);
+        if (_flags.isDraggingImage) {
+            self.imageDragStartingPoint = CGPointMake(0.0f, 0.0f);
+        }
+    }
+    else if (panner.state == UIGestureRecognizerStateChanged) {
+        if (_flags.isDraggingImage) {
+            CGPoint newAnchor = self.imageDragStartingPoint;
+            newAnchor.x += translation.x + self.imageDragOffsetFromActualTranslation.horizontal;
+            newAnchor.y = 0.0;
+            [self.imageView setFrame:CGRectMake(newAnchor.x, newAnchor.y, self.imageView.frame.size.width, self.imageView.frame.size.height)];
+        }
+    }
+    else {
+        if ([self.imageDataSourceDelegate respondsToSelector:@selector(numberOfImagesInImageViewer:)]) {
+            NSInteger count = [self.imageDataSourceDelegate numberOfImagesInImageViewer:self];
+            CGPoint velocity = [panner velocityInView:self.view];
+            if(velocity.x > 0) {
+                if (self.currentIndex > 0) {
+                    self.currentIndex--;
+                    if (_mode == JTSImageViewControllerMode_Image) {
+                        [self setupImageAndDownloadIfNecessary:self.imageInfo];
+                    }
+                    self.imageView.image = [UIImage new];
+                    self.progressContainer.alpha = 1.0;
+                    [self.imageView setFrame:CGRectMake(-self.view.frame.size.width * 2, 0.0f, self.imageView.frame.size.width, self.imageView.frame.size.height)];
+                }
+            }
+            else {
+                if (self.currentIndex+1 < count) {
+                    self.currentIndex++;
+                    if (_mode == JTSImageViewControllerMode_Image) {
+                        [self setupImageAndDownloadIfNecessary:self.imageInfo];
+                    }
+                    self.imageView.image = [UIImage new];
+                    self.progressContainer.alpha = 1.0;
+                    [self.imageView setFrame:CGRectMake(self.view.frame.size.width * 2, 0.0f, self.imageView.frame.size.width, self.imageView.frame.size.height)];
+                }
+            }
+        }
+        
+        [UIView animateWithDuration:0.5f
+                              delay:0.0f
+                            options:UIViewAnimationOptionCurveEaseInOut
+                         animations:^{
+                             [self.imageView setFrame:CGRectMake(0.0f, 0.0f, self.imageView.frame.size.width, self.imageView.frame.size.height)];
+                         } completion:nil];
     }
 }
 
