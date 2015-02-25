@@ -1725,6 +1725,8 @@ typedef struct {
     
     CGPoint translation = [panner translationInView:panner.view];
     CGPoint locationInView = [panner locationInView:panner.view];
+    CGPoint velocity = [panner velocityInView:panner.view];
+    CGFloat vectorDistance = sqrtf(powf(velocity.x, 2)+powf(velocity.y, 2));
     
     if (panner.state == UIGestureRecognizerStateBegan) {
         _flags.isDraggingImage = CGRectContainsPoint(self.imageView.frame, locationInView);
@@ -1741,29 +1743,31 @@ typedef struct {
         }
     }
     else {
-        if ([self.imageDataSourceDelegate respondsToSelector:@selector(numberOfImagesInImageViewer:)]) {
-            NSInteger count = [self.imageDataSourceDelegate numberOfImagesInImageViewer:self];
-            CGPoint velocity = [panner velocityInView:self.view];
-            if(velocity.x > 0) {
-                if (self.currentIndex > 0) {
-                    self.currentIndex--;
-                    if (_mode == JTSImageViewControllerMode_Image) {
-                        [self setupImageAndDownloadIfNecessary:self.imageInfo];
+        if (vectorDistance > JTSImageViewController_MinimumFlickDismissalVelocity) {
+            if ([self.imageDataSourceDelegate respondsToSelector:@selector(numberOfImagesInImageViewer:)]) {
+                NSInteger count = [self.imageDataSourceDelegate numberOfImagesInImageViewer:self];
+                CGPoint velocity = [panner velocityInView:self.view];
+                if(velocity.x > 0) {
+                    if (self.currentIndex > 0) {
+                        self.currentIndex--;
+                        if (_mode == JTSImageViewControllerMode_Image) {
+                            [self setupImageAndDownloadIfNecessary:self.imageInfo];
+                        }
+                        self.imageView.image = [UIImage new];
+                        self.progressContainer.alpha = 1.0;
+                        [self.imageView setFrame:CGRectMake(-self.view.frame.size.width * 2, 0.0f, self.imageView.frame.size.width, self.imageView.frame.size.height)];
                     }
-                    self.imageView.image = [UIImage new];
-                    self.progressContainer.alpha = 1.0;
-                    [self.imageView setFrame:CGRectMake(-self.view.frame.size.width * 2, 0.0f, self.imageView.frame.size.width, self.imageView.frame.size.height)];
                 }
-            }
-            else {
-                if (self.currentIndex+1 < count) {
-                    self.currentIndex++;
-                    if (_mode == JTSImageViewControllerMode_Image) {
-                        [self setupImageAndDownloadIfNecessary:self.imageInfo];
+                else {
+                    if (self.currentIndex+1 < count) {
+                        self.currentIndex++;
+                        if (_mode == JTSImageViewControllerMode_Image) {
+                            [self setupImageAndDownloadIfNecessary:self.imageInfo];
+                        }
+                        self.imageView.image = [UIImage new];
+                        self.progressContainer.alpha = 1.0;
+                        [self.imageView setFrame:CGRectMake(self.view.frame.size.width * 2, 0.0f, self.imageView.frame.size.width, self.imageView.frame.size.height)];
                     }
-                    self.imageView.image = [UIImage new];
-                    self.progressContainer.alpha = 1.0;
-                    [self.imageView setFrame:CGRectMake(self.view.frame.size.width * 2, 0.0f, self.imageView.frame.size.width, self.imageView.frame.size.height)];
                 }
             }
         }
