@@ -54,6 +54,8 @@ extern CGFloat const JTSImageViewController_DefaultBackgroundBlurRadius;
 
 @property (assign, nonatomic, readonly) JTSImageViewControllerBackgroundOptions backgroundOptions;
 
+@property (assign, nonatomic, readwrite) NSInteger currentIndex;
+
 @property (weak, nonatomic, readwrite) id <JTSImageViewControllerDismissalDelegate> dismissalDelegate;
 
 @property (weak, nonatomic, readwrite) id <JTSImageViewControllerOptionsDelegate> optionsDelegate;
@@ -244,7 +246,12 @@ extern CGFloat const JTSImageViewController_DefaultBackgroundBlurRadius;
 @required
 
 - (NSInteger)numberOfImagesInImageViewer:(JTSImageViewController *)imageViewer;
+
 - (JTSImageInfo *)imageViewer:(JTSImageViewController *)imageViewer imageInfoAtIndex:(NSInteger)index;
+
+@optional
+
+- (void)imageViewer:(JTSImageViewController *)imageViewer didLoadImage:(UIImage *)image withImageInfo:(JTSImageInfo *)imageInfo;
 
 @end
 

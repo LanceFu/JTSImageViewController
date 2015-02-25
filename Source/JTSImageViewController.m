@@ -75,7 +75,6 @@ typedef struct {
 @property (assign, nonatomic, readwrite) JTSImageViewControllerBackgroundOptions backgroundOptions;
 @property (assign, nonatomic) JTSImageViewControllerStartingInfo startingInfo;
 @property (assign, nonatomic) JTSImageViewControllerFlags flags;
-@property (assign, nonatomic) NSInteger currentIndex;
 
 // Autorotation
 @property (assign, nonatomic) UIInterfaceOrientation lastUsedOrientation;
@@ -139,7 +138,10 @@ typedef struct {
     return self;
 }
 
-- (instancetype)initWithMode:(JTSImageViewControllerMode)mode backgroundStyle:(JTSImageViewControllerBackgroundOptions)backgroundOptions imageDataSourceDelegate:(id <JTSImageViewControllerImageDataSourceDelegate>)imageDataSourceDelegate {
+- (instancetype)initWithMode:(JTSImageViewControllerMode)mode
+             backgroundStyle:(JTSImageViewControllerBackgroundOptions)backgroundOptions
+     imageDataSourceDelegate:(id <JTSImageViewControllerImageDataSourceDelegate>)imageDataSourceDelegate {
+    
     self = [super initWithNibName:nil bundle:nil];
     if (self) {
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(deviceOrientationDidChange:) name:UIDeviceOrientationDidChangeNotification object:nil];
@@ -147,8 +149,12 @@ typedef struct {
         _mode = mode;
         _backgroundOptions = backgroundOptions;
         _imageDataSourceDelegate = imageDataSourceDelegate;
-        if (_mode == JTSImageViewControllerMode_Image) {
-            [self setupImageAndDownloadIfNecessary:self.imageInfo];
+        _currentIndex = 0;
+        if ([_imageDataSourceDelegate respondsToSelector:@selector(imageViewer:imageInfoAtIndex:)]) {
+            _imageInfo = [_imageDataSourceDelegate imageViewer:self imageInfoAtIndex:_currentIndex];
+            if (_mode == JTSImageViewControllerMode_Image) {
+                [self setupImageAndDownloadIfNecessary:_imageInfo];
+            }
         }
     }
     return self;
@@ -215,14 +221,23 @@ typedef struct {
     [self cancelProgressTimer];
 }
 
-#pragma mark - Getters
+#pragma mark - Setters
 
-- (JTSImageInfo *)imageInfo {
-    if ([self.imageDataSourceDelegate respondsToSelector:@selector(imageViewer:imageInfoAtIndex:)]) {
-        JTSImageInfo *info = [self.imageDataSourceDelegate imageViewer:self imageInfoAtIndex:self.currentIndex];
-        return info;
+- (void)setCurrentIndex:(NSInteger)currentIndex {
+    _currentIndex = currentIndex;
+    
+    if ([_imageDataSourceDelegate respondsToSelector:@selector(imageViewer:imageInfoAtIndex:)]) {
+        _image = nil;
+        _imageInfo = [_imageDataSourceDelegate imageViewer:self imageInfoAtIndex:currentIndex];
+        if (_mode == JTSImageViewControllerMode_Image) {
+            [self setupImageAndDownloadIfNecessary:_imageInfo];
+            if (!_image) {
+                _spinner.alpha = 1.0;
+                [_spinner startAnimating];
+            }
+        }
+        _imageView.image = _image;
     }
-    return _imageInfo;
 }
 
 #pragma mark - UIViewController
@@ -419,6 +434,12 @@ typedef struct {
             typeof(self) strongSelf = weakSelf;
             [strongSelf cancelProgressTimer];
             if (image) {
+                if ([self.imageDataSourceDelegate respondsToSelector:@selector(imageViewer:didLoadImage:withImageInfo:)]) {
+                    [self.imageDataSourceDelegate imageViewer:self didLoadImage:image withImageInfo:imageInfo];
+                    if (imageInfo.imageURL != self.imageInfo.imageURL) {
+                        return;
+                    }
+                }
                 if (strongSelf.isViewLoaded) {
                     [strongSelf updateInterfaceWithImage:image];
                 } else {
@@ -1750,22 +1771,12 @@ typedef struct {
                 if(velocity.x > 0) {
                     if (self.currentIndex > 0) {
                         self.currentIndex--;
-                        if (_mode == JTSImageViewControllerMode_Image) {
-                            [self setupImageAndDownloadIfNecessary:self.imageInfo];
-                        }
-                        self.imageView.image = [UIImage new];
-                        self.progressContainer.alpha = 1.0;
                         [self.imageView setFrame:CGRectMake(-self.view.frame.size.width * 2, 0.0f, self.imageView.frame.size.width, self.imageView.frame.size.height)];
                     }
                 }
                 else {
                     if (self.currentIndex+1 < count) {
                         self.currentIndex++;
-                        if (_mode == JTSImageViewControllerMode_Image) {
-                            [self setupImageAndDownloadIfNecessary:self.imageInfo];
-                        }
-                        self.imageView.image = [UIImage new];
-                        self.progressContainer.alpha = 1.0;
                         [self.imageView setFrame:CGRectMake(self.view.frame.size.width * 2, 0.0f, self.imageView.frame.size.width, self.imageView.frame.size.height)];
                     }
                 }
