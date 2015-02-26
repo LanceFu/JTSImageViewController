@@ -1783,9 +1783,9 @@ typedef struct {
             }
         }
         
-        [UIView animateWithDuration:0.5f
+        [UIView animateWithDuration:0.25f
                               delay:0.0f
-                            options:UIViewAnimationOptionCurveEaseInOut
+                            options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionCurveEaseInOut
                          animations:^{
                              [self.imageView setFrame:CGRectMake(0.0f, 0.0f, self.imageView.frame.size.width, self.imageView.frame.size.height)];
                          } completion:nil];
