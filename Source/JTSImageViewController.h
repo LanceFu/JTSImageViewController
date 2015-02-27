@@ -253,6 +253,10 @@ extern CGFloat const JTSImageViewController_DefaultBackgroundBlurRadius;
 
 - (void)imageViewer:(JTSImageViewController *)imageViewer didLoadImage:(UIImage *)image withImageInfo:(JTSImageInfo *)imageInfo;
 
+- (UIView *)footerViewInImageViewer:(JTSImageViewController *)imageViewer;
+
+- (void)imageViewer:(JTSImageViewController *)imageViewer willUpdateFooterView:(UIView *)footerView withimageInfoAtIndex:(NSInteger)index;
+
 @end
 
 

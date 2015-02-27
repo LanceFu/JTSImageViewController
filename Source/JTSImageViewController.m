@@ -86,6 +86,7 @@ typedef struct {
 @property (strong, nonatomic) UIView *snapshotView;
 @property (strong, nonatomic) UIView *blurredSnapshotView;
 @property (strong, nonatomic) UIView *blackBackdrop;
+@property (strong, nonatomic) UIView *footerView;
 @property (strong, nonatomic) UIImageView *imageView;
 @property (strong, nonatomic) UIScrollView *scrollView;
 @property (strong, nonatomic) UITextView *textView;
@@ -229,6 +230,9 @@ typedef struct {
     if ([_imageDataSourceDelegate respondsToSelector:@selector(imageViewer:imageInfoAtIndex:)]) {
         _image = nil;
         _imageInfo = [_imageDataSourceDelegate imageViewer:self imageInfoAtIndex:currentIndex];
+        if ([_imageDataSourceDelegate respondsToSelector:@selector(imageViewer:willUpdateFooterView:withimageInfoAtIndex:)]) {
+            [_imageDataSourceDelegate imageViewer:self willUpdateFooterView:_footerView withimageInfoAtIndex:currentIndex];
+        }
         if (_mode == JTSImageViewControllerMode_Image) {
             [self setupImageAndDownloadIfNecessary:_imageInfo];
             if (!_image) {
@@ -493,6 +497,18 @@ typedef struct {
     if ([self.optionsDelegate respondsToSelector:@selector(imageViewerShouldFadeThumbnailsDuringPresentationAndDismissal:)]) {
         if ([self.optionsDelegate imageViewerShouldFadeThumbnailsDuringPresentationAndDismissal:self]) {
             self.imageView.alpha = 0;
+        }
+    }
+    
+    if ([self.imageDataSourceDelegate respondsToSelector:@selector(footerViewInImageViewer:)]) {
+        self.footerView = [self.imageDataSourceDelegate footerViewInImageViewer:self];
+        [self.view addSubview:self.footerView];
+        [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.footerView attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeBottom multiplier:1.0 constant:0.0]];
+        [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.footerView attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeLeft multiplier:1.0 constant:0.0]];
+        [self.view addConstraint:[NSLayoutConstraint constraintWithItem:self.footerView attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeRight multiplier:1.0 constant:0.0]];
+        
+        if ([self.imageDataSourceDelegate respondsToSelector:@selector(imageViewer:willUpdateFooterView:withimageInfoAtIndex:)]) {
+            [self.imageDataSourceDelegate imageViewer:self willUpdateFooterView:self.footerView withimageInfoAtIndex:self.currentIndex];
         }
     }
     
