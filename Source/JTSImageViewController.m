@@ -1785,11 +1785,12 @@ typedef struct {
         if (_flags.isDraggingImage) {
             CGPoint newAnchor = self.imageDragStartingPoint;
             newAnchor.x += translation.x + self.imageDragOffsetFromActualTranslation.horizontal;
-            newAnchor.y = 0.0;
-            [self.imageView setFrame:CGRectMake(newAnchor.x, newAnchor.y, self.imageView.frame.size.width, self.imageView.frame.size.height)];
+            self.imageView.frame = CGRectMake(newAnchor.x, self.imageView.frame.origin.y, self.imageView.frame.size.width, self.imageView.frame.size.height);
         }
     }
     else {
+        _flags.isDraggingImage = NO;
+        
         if (vectorDistance > JTSImageViewController_MinimumFlickDismissalVelocity) {
             if ([self.imageDataSourceDelegate respondsToSelector:@selector(numberOfImagesInImageViewer:)]) {
                 NSInteger count = [self.imageDataSourceDelegate numberOfImagesInImageViewer:self];
@@ -1797,13 +1798,13 @@ typedef struct {
                 if(velocity.x > 0) {
                     if (self.currentIndex > 0) {
                         self.currentIndex--;
-                        [self.imageView setFrame:CGRectMake(-self.view.frame.size.width * 2, 0.0f, self.imageView.frame.size.width, self.imageView.frame.size.height)];
+                        self.imageView.frame = CGRectOffset(self.imageView.frame, -self.view.frame.size.width * 2, 0.0f);
                     }
                 }
                 else {
                     if (self.currentIndex+1 < count) {
                         self.currentIndex++;
-                        [self.imageView setFrame:CGRectMake(self.view.frame.size.width * 2, 0.0f, self.imageView.frame.size.width, self.imageView.frame.size.height)];
+                        self.imageView.frame = CGRectOffset(self.imageView.frame, self.view.frame.size.width * 2, 0.0f);
                     }
                 }
             }
@@ -1813,8 +1814,10 @@ typedef struct {
                               delay:0.0f
                             options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionCurveEaseInOut
                          animations:^{
-                             [self.imageView setFrame:CGRectMake(0.0f, 0.0f, self.imageView.frame.size.width, self.imageView.frame.size.height)];
-                         } completion:nil];
+                             self.imageView.frame = CGRectMake(0.0f, self.imageView.frame.origin.y, self.imageView.frame.size.width, self.imageView.frame.size.height);
+                         } completion:^(BOOL finished) {
+                             
+                         }];
     }
 }
 
