@@ -194,6 +194,9 @@ typedef struct {
     }
     else if (self.mode == JTSImageViewControllerMode_Image) {
         
+        if (self.footerView) {
+            self.footerView.hidden = YES;
+        }
         if (_flags.imageIsFlickingAwayForDismissal) {
             [self dismissByCleaningUpAfterImageWasFlickedOffscreen];
         }
@@ -226,6 +229,13 @@ typedef struct {
 
 - (void)setCurrentIndex:(NSInteger)currentIndex {
     _currentIndex = currentIndex;
+    
+    if ([self.imageDataSourceDelegate respondsToSelector:@selector(numberOfImagesInImageViewer:)]) {
+        if ([_imageDataSourceDelegate numberOfImagesInImageViewer:self] == 0) {
+            [self dismiss:YES];
+            return;
+        }
+    }
     
     if ([_imageDataSourceDelegate respondsToSelector:@selector(imageViewer:imageInfoAtIndex:)]) {
         _image = nil;
