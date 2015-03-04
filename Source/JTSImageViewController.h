@@ -97,6 +97,10 @@ extern CGFloat const JTSImageViewController_DefaultBackgroundBlurRadius;
 - (void)showFromViewController:(UIViewController *)viewController
                     transition:(JTSImageViewControllerTransition)transition;
 
+- (void)showFromViewController:(UIViewController *)viewController
+      withNavigationController:(UINavigationController *)navigationController
+                    transition:(JTSImageViewControllerTransition)transition;
+
 /**
  Dismisses the image viewer. Must not be called while previous presentation or dismissal is still in flight.
  */

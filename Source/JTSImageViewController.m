@@ -75,6 +75,7 @@ typedef struct {
 @property (assign, nonatomic, readwrite) JTSImageViewControllerBackgroundOptions backgroundOptions;
 @property (assign, nonatomic) JTSImageViewControllerStartingInfo startingInfo;
 @property (assign, nonatomic) JTSImageViewControllerFlags flags;
+@property (strong, nonatomic) UINavigationController *navigationController;
 
 // Autorotation
 @property (assign, nonatomic) UIInterfaceOrientation lastUsedOrientation;
@@ -178,6 +179,13 @@ typedef struct {
     } else if (self.mode == JTSImageViewControllerMode_AltText) {
         [self showAltTextFromViewController:viewController];
     }
+}
+
+- (void)showFromViewController:(UIViewController *)viewController
+      withNavigationController:(UINavigationController *)navigationController
+                    transition:(JTSImageViewControllerTransition)transition {
+    self.navigationController = navigationController;
+    [self showFromViewController:viewController transition:transition];
 }
 
 - (void)dismiss:(BOOL)animated {
@@ -668,7 +676,12 @@ typedef struct {
     // the transition finishes.
     [self.view addSubview:self.imageView];
     
-    [viewController presentViewController:self animated:NO completion:^{
+    UIViewController *controller = self;
+    if (self.navigationController) {
+        [self.navigationController setViewControllers:@[self] animated:NO];
+        controller = self.navigationController;
+    }
+    [viewController presentViewController:controller animated:NO completion:^{
         
         if ([UIApplication sharedApplication].statusBarOrientation != _startingInfo.startingInterfaceOrientation) {
             _startingInfo.presentingViewControllerPresentedFromItsUnsupportedOrientation = YES;
@@ -836,7 +849,12 @@ typedef struct {
     
     [self.scrollView addSubview:self.imageView];
     
-    [viewController presentViewController:self animated:NO completion:^{
+    UIViewController *controller = self;
+    if (self.navigationController) {
+        [self.navigationController setViewControllers:@[self] animated:NO];
+        controller = self.navigationController;
+    }
+    [viewController presentViewController:controller animated:NO completion:^{
         
         if ([UIApplication sharedApplication].statusBarOrientation != _startingInfo.startingInterfaceOrientation) {
             _startingInfo.presentingViewControllerPresentedFromItsUnsupportedOrientation = YES;
