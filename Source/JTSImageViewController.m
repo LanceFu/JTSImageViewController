@@ -447,6 +447,7 @@ typedef struct {
     else {
         
         self.image = imageInfo.placeholderImage;
+        self.progressContainer.alpha = 1.0;
         
         BOOL fromDisk = [imageInfo.imageURL.absoluteString hasPrefix:@"file://"];
         _flags.imageIsBeingReadFromDisk = fromDisk;
